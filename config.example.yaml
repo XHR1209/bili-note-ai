@@ -12,6 +12,7 @@ llm:
   chunk_overlap_chars: 300
   max_concurrency: 4            # LLM 并发数
   timeout_seconds: 120
+  disable_thinking: true        # DeepSeek v4 系列：关闭思考（快约10倍、省token、输出稳定）
   budget:
     max_calls_per_video: 200    # 每视频 LLM 调用上限（超限优雅降级）
 
