@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import threading
 import time
 from typing import Any
@@ -29,6 +30,13 @@ logger = logging.getLogger(__name__)
 
 MAX_RETRIES = 3
 RETRY_BASE_SECONDS = 2.0
+
+_CODE_FENCE_RE = re.compile(r"^```(?:json)?\s*|\s*```$", re.MULTILINE)
+
+
+def _strip_code_fence(text: str) -> str:
+    """剥离模型偶尔包裹的 ```json ... ``` markdown 代码块标记。"""
+    return _CODE_FENCE_RE.sub("", text.strip())
 
 
 class LLMBudgetExceeded(Exception):
@@ -56,6 +64,7 @@ class LLMClient:
         self._calls = 0
         self._prompt_tokens = 0
         self._completion_tokens = 0
+        self._disable_thinking = cfg.disable_thinking
 
     # ------------------------------------------------------------------
     # 对外接口
@@ -81,13 +90,17 @@ class LLMClient:
         for attempt in range(2):
             try:
                 text = self.chat(system, json_prompt, max_tokens=max_tokens)
-                parsed = json.loads(text)
+                parsed = json.loads(_strip_code_fence(text))
                 if isinstance(parsed, dict):
                     return parsed
                 raise ValueError("JSON 根节点不是对象")
             except (json.JSONDecodeError, ValueError) as e:
                 last_err = e
-                logger.warning("chat_json 解析失败（第 %d 次），重试：%s", attempt + 1, e)
+                logger.warning(
+                    "chat_json 解析失败（第 %d 次），重试。原始返回前 120 字符：%r",
+                    attempt + 1,
+                    (text if "text" in locals() else "")[:120],
+                )
         raise ValueError(f"LLM JSON 输出连续解析失败：{last_err}")
 
     def stats(self) -> dict[str, int]:
@@ -132,12 +145,18 @@ class LLMClient:
             raise RuntimeError(f"LLM 调用连续失败（已重试 {MAX_RETRIES} 次）：{last_err}")
 
     def _call_once(self, messages: list[dict], *, max_tokens: int | None) -> str:
+        kwargs: dict[str, Any] = {}
+        if self._disable_thinking:
+            # DeepSeek v4 系列默认长思考会耗尽 max_tokens 导致 content 为空（实测根因），
+            # 关闭思考：快 ~10 倍、省 token、输出稳定（仅对 DeepSeek 兼容端点有效）
+            kwargs["extra_body"] = {"thinking": {"type": "disabled"}}
         resp = self._client.chat.completions.create(
             model=self._cfg.model,
             messages=messages,
             temperature=self._cfg.temperature,
             max_tokens=max_tokens or self._cfg.max_tokens,
             timeout=self._cfg.timeout_seconds,
+            **kwargs,
         )
         with self._lock:
             self._calls += 1
@@ -145,4 +164,8 @@ class LLMClient:
             if usage:
                 self._prompt_tokens += usage.prompt_tokens or 0
                 self._completion_tokens += usage.completion_tokens or 0
-        return resp.choices[0].message.content or ""
+        content = resp.choices[0].message.content or ""
+        if not content.strip():
+            # 空内容（HTTP 200 但无正文）视为失败，走重试逻辑
+            raise APIError("模型返回空内容（可能是思考过程耗尽 max_tokens 预算）")
+        return content
