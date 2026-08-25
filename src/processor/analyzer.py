@@ -228,10 +228,17 @@ def _generate_narratives(
 def _summarize_all_chunks(
     llm: LLMClient, title: str, raw_chunks: list[tuple[float, float, str]]
 ) -> list[dict]:
-    """阶段A：并行分块摘要；预算超限时块两两合并降级重试（ADR #9）。"""
+    """阶段A：并行分块摘要。
+
+    降级策略：
+    - 预算超限（LLMBudgetExceeded）：块两两合并粗粒度重试（ADR #9）
+    - 单块失败（网络/空响应等）：失败块与相邻块合并重试，绝不崩掉整条流水线
+    """
     chunks: list[dict] = []
     pool = raw_chunks[:]
     while pool:
+        budget_exceeded = False
+        failed_idx: list[int] = []
         try:
             with ThreadPoolExecutor(max_workers=llm.max_concurrency) as ex:
                 futures = {
@@ -250,9 +257,19 @@ def _summarize_all_chunks(
                 results: list[dict] = [None] * len(pool)  # type: ignore[list-item]
                 for fut in as_completed(futures):
                     idx, chunk = futures[fut]
-                    results[idx] = {**fut.result(), "_start": chunk[0], "_end": chunk[1]}
-            chunks = results
-            break
+                    try:
+                        results[idx] = {**fut.result(), "_start": chunk[0], "_end": chunk[1]}
+                    except LLMBudgetExceeded:
+                        budget_exceeded = True
+                    except Exception as e:
+                        failed_idx.append(idx)
+                        logger.warning("块 %d 摘要失败（%s），将并入相邻块重试", idx, e)
+            if budget_exceeded:
+                raise LLMBudgetExceeded(llm._cfg.max_calls_per_video)
+            if not failed_idx:
+                chunks = results
+                break
+            pool = _merge_failed_chunks(pool, failed_idx)
         except LLMBudgetExceeded:
             if len(pool) <= 1:
                 logger.error("预算不足以完成任何分块摘要")
@@ -270,6 +287,31 @@ def _summarize_all_chunks(
             logger.warning("LLM 预算超限：块数 %d → %d，粗粒度重试", len(pool), len(merged))
             pool = merged
     return chunks
+
+
+def _merge_failed_chunks(
+    pool: list[tuple[float, float, str]], failed_idx: list[int]
+) -> list[tuple[float, float, str]]:
+    """把失败的块与相邻块合并（与后一块合并，最后一块与前一块合并）。"""
+    new_pool: list[tuple[float, float, str]] = []
+    skip: set[int] = set()
+    for i, c in enumerate(pool):
+        if i in skip:
+            continue
+        if i in failed_idx:
+            if i + 1 < len(pool):
+                nxt = pool[i + 1]
+                new_pool.append((c[0], nxt[1], c[2] + "\n" + nxt[2]))
+                skip.add(i + 1)
+            elif new_pool:
+                prev = new_pool.pop()
+                new_pool.append((prev[0], c[1], prev[2] + "\n" + c[2]))
+            else:
+                new_pool.append(c)  # 单块视频：原样重试
+        else:
+            new_pool.append(c)
+    logger.warning("失败块合并重试：%d 块 → %d 块", len(pool), len(new_pool))
+    return new_pool
 
 
 def _merge_with_retry(
