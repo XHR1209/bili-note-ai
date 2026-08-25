@@ -96,8 +96,9 @@ PYTHONPATH=. .venv/bin/python -m src.main "https://www.bilibili.com/video/BV1kJ4
 -v              # 调试日志
 
 # 后台运行（日志落盘，终端可关闭）
-PYTHONPATH=. HF_ENDPOINT=https://hf-mirror.com nohup .venv/bin/python -m src.main BV1N8w9zJENu > run.log 2>&1 &
-tail -5 run.log   # 随时查看进度
+# PYTHONUNBUFFERED=1 强制日志实时写入（不加则日志会攒批延迟出现）
+PYTHONPATH=. HF_ENDPOINT=https://hf-mirror.com PYTHONUNBUFFERED=1 nohup .venv/bin/python -m src.main BV1N8w9zJENu > run.log 2>&1 &
+tail -f run.log   # 持续跟随查看进度（Ctrl+C 退出，不影响进程）
 ```
 
 ### 5. 产物
