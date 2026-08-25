@@ -24,6 +24,7 @@ class LLMConfig:
     max_calls_per_video: int = 200
     api_key: str = ""
     base_url: str = ""
+    disable_thinking: bool = False     # DeepSeek v4 系列：关闭思考（快 10 倍、输出稳定）
 
 
 @dataclass
