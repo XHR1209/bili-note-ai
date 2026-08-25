@@ -1,7 +1,7 @@
 [project]
-name = "bili-learn-ai"
+name = "bili-note-ai"
 version = "0.1.0"
-description = "B站AI速学助手：输入BV号，自动产出全视频图文笔记与极简速览摘要"
+description = "Bili Note AI：B站视频 → AI 生成结构化学习笔记（章节化图文笔记 + 讲义式导读 + 关键帧）"
 requires-python = ">=3.10"
 dependencies = [
     "yt-dlp>=2024.1.1",

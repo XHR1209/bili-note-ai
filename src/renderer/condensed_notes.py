@@ -23,7 +23,7 @@ def render_condensed_notes(output: FinalOutput) -> str:
         lines.extend(_render_chapter(ch))
 
     lines.append("---")
-    lines.append("*本笔记由 Bili-Learn-AI 自动生成。*")
+    lines.append("*本笔记由 Bili Note AI 自动生成。*")
     lines.append("")
     return "\n".join(lines)
 

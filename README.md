@@ -1,4 +1,4 @@
-# 项目设计文档：B站AI速学助手 (Bili-Learn-AI)
+# Bili Note AI：B站视频 → AI 生成结构化学习笔记
 
 ## 0. 项目概述
 
