@@ -1,0 +1,32 @@
+[project]
+name = "bili-learn-ai"
+version = "0.1.0"
+description = "B站AI速学助手：输入BV号，自动产出全视频图文笔记与极简速览摘要"
+requires-python = ">=3.10"
+dependencies = [
+    "yt-dlp>=2024.1.1",
+    "faster-whisper>=1.0.0",
+    "opencv-python>=4.8.0",
+    "scenedetect[opencv]>=0.6.4",
+    "openai>=1.30.0",
+    "pydantic>=2.6.0",
+    "PyYAML>=6.0",
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+# 备用转写后端（官方 openai-whisper 实现，默认不需要）
+whisper-openai = ["openai-whisper>=20231117"]
+
+[project.scripts]
+bili-learn = "src.main:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["src", "src.fetcher", "src.processor", "src.renderer", "src.discover"]
+
+[tool.setuptools.package-data]
+src = ["py.typed"]

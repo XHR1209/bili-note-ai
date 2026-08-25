@@ -1,0 +1,41 @@
+# Bili-Learn-AI 配置模板（脱敏版，可上传 GitHub）
+# 使用方法：cp config.example.yaml config.yaml，然后填入你自己的密钥。
+# ⚠️ config.yaml 已被 .gitignore 排除，切勿提交真实密钥。
+
+llm:
+  model: "deepseek-chat"        # 任意 OpenAI 兼容模型名（DeepSeek v4 用 deepseek-v4-flash/pro）
+  api_key: ""                   # ⚠️ 填入你的 API Key（或使用环境变量 API_KEY）
+  base_url: ""                  # ⚠️ OpenAI 兼容端点（如 https://api.deepseek.com/v1）
+  max_tokens: 4096
+  temperature: 0.3
+  chunk_chars: 2500             # analyzer 分块大小
+  chunk_overlap_chars: 300
+  max_concurrency: 4            # LLM 并发数
+  timeout_seconds: 120
+  budget:
+    max_calls_per_video: 200    # 每视频 LLM 调用上限（超限优雅降级）
+
+transcription:
+  backend: "faster-whisper"     # "faster-whisper"(默认) | "openai-whisper"(备用)
+  whisper_model: "base"         # tiny/base/small/medium/large
+  whisper_language: null        # null = 自动检测
+
+frames:
+  strategy: "scene+time"        # 主：场景检测；时间采样兜底
+  scene_detection:
+    detector: "content"         # PySceneDetect ContentDetector
+    threshold: 27.0             # 灵敏度（需真实样本标定）
+    min_scene_len: 2.0          # 最短场景时长(秒)，过短并入相邻场景
+  time_sampling:                # 兜底采样参数
+    sample_every_short: 30      # ≤10分钟视频采样间隔(秒)
+    sample_every_long: 60       # >10分钟视频采样间隔(秒)
+    duration_threshold: 600     # 长短视频阈值(秒)
+  max_keyframes_per_chapter: 3
+
+paths:
+  temp_dir: "temp"
+  output_dir: "outputs"
+
+bilibili:
+  cookie: ""                    # ⚠️ 可选：B 站登录 Cookie（ai-zh 字幕需要，浏览器 F12 复制）
+  format_pref: "bv*+ba/b"       # yt-dlp 格式偏好，优先 mp4

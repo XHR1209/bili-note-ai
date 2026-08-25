@@ -1,0 +1,18 @@
+{
+  "source": "cc",
+  "language": "zh",
+  "segments": [
+    {"start_time": 0.0, "end_time": 3.5, "text": "大家好，欢迎来到本次课程"},
+    {"start_time": 3.5, "end_time": 8.0, "text": "今天我们要讲解什么是深度学习"},
+    {"start_time": 8.0, "end_time": 15.0, "text": "深度学习是机器学习的一个子领域"},
+    {"start_time": 15.0, "end_time": 22.0, "text": "它使用多层神经网络来学习数据特征"},
+    {"start_time": 22.0, "end_time": 30.0, "text": "第一个要点：神经网络的基本结构"},
+    {"start_time": 30.0, "end_time": 40.0, "text": "神经网络由输入层、隐藏层和输出层组成"},
+    {"start_time": 40.0, "end_time": 50.0, "text": "第二个要点：反向传播算法"},
+    {"start_time": 50.0, "end_time": 60.0, "text": "反向传播用于计算梯度并更新权重"},
+    {"start_time": 60.0, "end_time": 70.0, "text": "第三个要点：激活函数的选择"},
+    {"start_time": 70.0, "end_time": 80.0, "text": "ReLU 是实践中常用的激活函数"},
+    {"start_time": 80.0, "end_time": 90.0, "text": "最后总结一下本节课的内容"},
+    {"start_time": 90.0, "end_time": 100.0, "text": "谢谢观看，我们下节课再见"}
+  ]
+}
