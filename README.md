@@ -3,7 +3,7 @@
 输入一个 B 站视频链接（BV 号），自动产出**章节化的图文学习笔记**——每章包含可独立阅读的讲义式导读、带解释的要点、以及 LLM 精选的关键帧截图。
 
 ```bash
-bili-learn BV1N8w9zJENu
+PYTHONPATH=. .venv/bin/python -m src.main BV1N8w9zJENu
 # → outputs/notes/BV1N8w9zJENu_notes.md
 ```
 
@@ -55,11 +55,12 @@ fork 通过完整复制状态机（内存、寄存器、内核状态）来创建
 git clone <你的仓库地址>
 cd bili-note-ai
 python3 -m venv .venv
-.venv/bin/pip install -r pyproject.toml  # 或：.venv/bin/pip install .
+.venv/bin/pip install yt-dlp "faster-whisper>=1.0.0" opencv-python "scenedetect[opencv]>=0.6.4" "openai>=1.30.0" "pydantic>=2.6.0" PyYAML requests
 ```
 
-> 若 editable install 在你的环境失败（Windows 挂载盘/DrvFS 已知问题），可直接用
-> `PYTHONPATH=. .venv/bin/python -m src.main ...` 运行，效果相同。
+> 本项目所有命令直接以 `PYTHONPATH=. .venv/bin/python -m src.main` 运行
+> （无需 pip install 本包）。若你的环境 `pip install -e .` 成功，可用等价的
+> `bili-learn` 命令（Windows 挂载盘/DrvFS 上 editable install 已知失败，故默认不依赖）。
 
 ### 3. 配置
 
@@ -85,8 +86,8 @@ cp config.example.yaml config.yaml
 
 ```bash
 # 基本用法（BV 号或完整链接均可）
-.venv/bin/bili-learn BV1N8w9zJENu
-.venv/bin/bili-learn "https://www.bilibili.com/video/BV1kJ411E7AQ?p=6"
+PYTHONPATH=. .venv/bin/python -m src.main BV1N8w9zJENu
+PYTHONPATH=. .venv/bin/python -m src.main "https://www.bilibili.com/video/BV1kJ411E7AQ?p=6"
 
 # 常用参数
 --no-frames     # 跳过抽帧（更快，仅生成文字笔记）
@@ -95,7 +96,7 @@ cp config.example.yaml config.yaml
 -v              # 调试日志
 
 # 后台运行（日志落盘，终端可关闭）
-nohup .venv/bin/bili-learn BV1N8w9zJENu > run.log 2>&1 &
+PYTHONPATH=. HF_ENDPOINT=https://hf-mirror.com nohup .venv/bin/python -m src.main BV1N8w9zJENu > run.log 2>&1 &
 tail -5 run.log   # 随时查看进度
 ```
 

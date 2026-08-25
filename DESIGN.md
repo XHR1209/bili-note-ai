@@ -75,7 +75,7 @@ bili-note-ai/
 ├── config.example.yaml    # 配置模板（脱敏，可提交）
 ├── config.yaml            # 本地配置（gitignore，含密钥）
 ├── src/
-│   ├── main.py            # CLI 入口（bili-learn <BV号> [--no-frames] [--force] ...）
+│   ├── main.py            # CLI 入口（python -m src.main <BV号> [--no-frames] [--force] ...）
 │   ├── models.py          # Pydantic 数据模型（§5）
 │   ├── config.py          # 加载 config.yaml + 环境变量
 │   ├── llm.py             # OpenAI SDK 统一封装（重试/并发/token统计/预算控制）
@@ -101,13 +101,13 @@ bili-note-ai/
 ## 4. 运行方式 (CLI)
 
 ```
-# M1：生产笔记
-bili-learn <BV号或完整链接> [--outdir outputs] [--no-frames] [--force] [-v]
-bili-learn "https://www.bilibili.com/video/BV1kJ411E7AQ?p=6"   # 多 P 指定分 P
+# M1：生产笔记（安装成功时可用等价的 bili-learn 命令）
+PYTHONPATH=. .venv/bin/python -m src.main <BV号或完整链接> [--outdir outputs] [--no-frames] [--force] [-v]
+PYTHONPATH=. .venv/bin/python -m src.main "https://www.bilibili.com/video/BV1kJ411E7AQ?p=6"   # 多 P
 
 # M2（未来）：关键词发现 → 候选清单 → 人工挑选后批量生产
-bili-learn discover "强化学习 入门" --prefer "up主:李宏毅" --min-duration 20 --top 10
-bili-learn process candidates.md
+python -m src.main discover "强化学习 入门" --prefer "up主:李宏毅" --min-duration 20 --top 10
+python -m src.main process candidates.md
 ```
 
 ## 5. 核心数据模型 (Data Models - Pydantic)
